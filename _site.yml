@@ -5,11 +5,11 @@ navbar:
   title: "databoard"
   left: # Navigation links on the left side of the navbar
     - text: "Trump 2.0"
-      href: index.html
+      href: trump.html
     - text: "2026 Midterms"
       href: midterms.html
     - text: "Westminster" 
-      href: analysis-1.html
+      href: westminster.html
     - text: "U.K Polls Analysis"
       menu: # Create a dropdown menu
         - text: "GE2024 VOTERS"

@@ -1,0 +1,10 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Welcome to my `Rmarkdown` website! This site showcases various analyses and visualizations I've created using `Python` and `R` in Rstudio and VSCode.
