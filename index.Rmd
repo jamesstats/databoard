@@ -1,0 +1,191 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+
+
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Trump Approval tracking
+
+```{r,trumpnat, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center', fig.width=12, fig.height=8} 
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(ggrepel)
+library(mgcv)
+
+# Load Data
+data_djt <- read_excel("data/trumptracker.xlsx")
+data_djt$Date <- as.Date(data_djt$Date)
+df_avg <- data_djt %>%
+  filter(!is.na(Opinion), !is.na(Share)) %>%
+  group_by(Date, Opinion) %>%
+  summarise(Average_Share = mean(Share, na.rm = TRUE), .groups = "drop")
+
+# Smoothing Logic
+trend_gam <- df_avg %>%
+  group_by(Opinion) %>%
+  group_modify(~{
+    x_num <- as.numeric(.x$Date)
+    gam_fit <- gam(Average_Share ~ s(x_num, k = 20, bs = "cs"), data = .x, method = "REML")
+    preds <- predict(gam_fit, se.fit = TRUE)
+    .x$Smoothed <- preds$fit
+    .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
+    .x$LowerCI <- preds$fit - 1.96 * preds$se.fit
+    .x
+  })
+
+latest_points <- trend_gam %>% group_by(Opinion) %>% filter(Date == max(Date)) %>% slice(1)
+
+# Plot
+ggplot(trend_gam, aes(x = Date, y = Smoothed, color = Opinion)) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = Opinion), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  geom_point(aes(y = Average_Share), size = 2, alpha = 0.2) +
+  geom_text_repel(data = latest_points, aes(label = paste0(round(Smoothed, 1), "%")), nudge_x = 10) +
+  scale_color_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  scale_fill_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  theme_classic() + 
+  labs(title = ".",y=".",x=".") 
+```
+
+## Trump Approval by Republicans
+
+```{r,trumpgop, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center', fig.width=12, fig.height=8} 
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(ggrepel)
+library(mgcv)
+
+# Load Data
+data_djt <- read_excel("data/trumptracker.xlsx")
+data_djt$Date <- as.Date(data_djt$Date)
+df_avg <- data_djt %>%
+  filter(!is.na(Opinion), !is.na(Share)) %>%
+  group_by(Date, Opinion) %>%
+  summarise(Average_Rep = mean(Republicans, na.rm = TRUE), .groups = "drop")
+
+# Smoothing Logic
+Rep_gam <- df_avg %>%
+  group_by(Opinion) %>%
+  group_modify(~{
+    x_num <- as.numeric(.x$Date)
+    gam_fit <- gam(Average_Rep ~ s(x_num, k = 20, bs = "cs"), data = .x, method = "REML")
+    preds <- predict(gam_fit, se.fit = TRUE)
+    .x$Smoothed <- preds$fit
+    .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
+    .x$LowerCI <- preds$fit - 1.96 * preds$se.fit
+    .x
+  })
+
+latest_points <- Rep_gam %>% group_by(Opinion) %>% filter(Date == max(Date)) %>% slice(1)
+
+# Plot
+ggplot(Rep_gam, aes(x = Date, y = Smoothed, color = Opinion)) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = Opinion), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  geom_point(aes(y = Average_Rep), size = 2, alpha = 0.2) +
+  geom_text_repel(data = latest_points, aes(label = paste0(round(Smoothed, 1), "%")), nudge_x = 10) +
+  scale_color_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  scale_fill_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  theme_classic() +
+  labs(title = "",y=".",x=".")  
+``` 
+
+## Trump Approval by Democrats
+
+```{r,trumpdem, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center', fig.width=12, fig.height=8} 
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(ggrepel)
+library(mgcv)
+
+# Load Data
+data_djt <- read_excel("data/trumptracker.xlsx")
+data_djt$Date <- as.Date(data_djt$Date)
+df_avg <- data_djt %>%
+  filter(!is.na(Opinion), !is.na(Share)) %>%
+  group_by(Date, Opinion) %>%
+  summarise(Average_Dem = mean(Democrats, na.rm = TRUE), .groups = "drop")
+
+# Smoothing Logic
+Dem_gam <- df_avg %>%
+  group_by(Opinion) %>%
+  group_modify(~{
+    x_num <- as.numeric(.x$Date)
+    gam_fit <- gam(Average_Dem ~ s(x_num, k = 20, bs = "cs"), data = .x, method = "REML")
+    preds <- predict(gam_fit, se.fit = TRUE)
+    .x$Smoothed <- preds$fit
+    .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
+    .x$LowerCI <- preds$fit - 1.96 * preds$se.fit
+    .x
+  })
+
+latest_points <- Dem_gam %>% group_by(Opinion) %>% filter(Date == max(Date)) %>% slice(1)
+
+# Plot
+ggplot(Dem_gam, aes(x = Date, y = Smoothed, color = Opinion)) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = Opinion), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  geom_point(aes(y = Average_Dem), size = 2, alpha = 0.2) +
+  geom_text_repel(data = latest_points, aes(label = paste0(round(Smoothed, 1), "%")), nudge_x = 10) +
+   
+  scale_color_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  scale_fill_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  theme_classic() +
+  labs(title = "",y=".",x=".")  
+``` 
+
+## Trump Approval by Independents
+
+
+```{r,trumind, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center', fig.width=12, fig.height=8} 
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(ggrepel)
+library(mgcv)
+
+# Load Data
+data_djt <- read_excel("data/trumptracker.xlsx")
+data_djt$Date <- as.Date(data_djt$Date)
+df_avg <- data_djt %>%
+  filter(!is.na(Opinion), !is.na(Share)) %>%
+  group_by(Date, Opinion) %>%
+  summarise(Average_Ind = mean(Independents, na.rm = TRUE), .groups = "drop")
+
+# Smoothing Logic
+Ind_gam <- df_avg %>%
+  group_by(Opinion) %>%
+  group_modify(~{
+    x_num <- as.numeric(.x$Date)
+    gam_fit <- gam(Average_Ind ~ s(x_num, k = 20, bs = "cs"), data = .x, method = "REML")
+    preds <- predict(gam_fit, se.fit = TRUE)
+    .x$Smoothed <- preds$fit
+    .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
+    .x$LowerCI <- preds$fit - 1.96 * preds$se.fit
+    .x
+  })
+
+latest_points <- Ind_gam %>% group_by(Opinion) %>% filter(Date == max(Date)) %>% slice(1)
+
+# Plot
+ggplot(Ind_gam, aes(x = Date, y = Smoothed, color = Opinion)) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = Opinion), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  geom_point(aes(y = Average_Ind), size = 2, alpha = 0.2) +
+  geom_text_repel(data = latest_points, aes(label = paste0(round(Smoothed, 1), "%")), nudge_x = 10) +
+  scale_color_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  scale_fill_manual(values = c("Approve" = "green", "Disapprove" = "red")) +
+  theme_classic() +
+  labs(title = "",y=".",x=".")  
+``` 
+
+ 

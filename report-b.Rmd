@@ -1,0 +1,164 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+```
+
+## The Voters who did not vote in 2024 General Election prefer?
+
+A look at who the 2024 General Election Non-Voters would support if another General Election were held today.The data is from <http://FindOutNow.co.uk>
+
+```{python,echo=FALSE,warning=FALSE} 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pygam import LinearGAM, s, l
+# Import for the K-Smoother
+from statsmodels.nonparametric.smoothers_lowess import lowess 
+# NOTE: statsmodels uses the 'lowess' function, which can be configured 
+# to act like a k-nearest neighbor smoother by setting the 'frac' parameter, 
+# although a dedicated K-smoother might offer more direct control. 
+# For true k-smoother, libraries like 'sklearn' or custom implementations are often used.
+# Sticking with statsmodels lowess for similarity to original code.
+
+# --- Data Loading (Update file path as necessary) ---
+try:
+    df = pd.read_excel(r"C:\Users\james\jupyterlab\FON_POLL.xlsx")
+except FileNotFoundError:
+    print("Error: Could not find the file. Please update the file path to a valid location.")
+    exit() # Stop execution if the file isn't found
+
+df['Date'] = pd.to_datetime(df['Date'])
+
+# --- Define Constants ---
+colors = {
+    "Conservative": "blue",
+    "Green Party": "green",
+    "Labour": "red",
+    "Liberal Democrats": "orange",
+    "Other": "black",
+    "Plaid Cymru": "lightgreen",
+    "Reform UK": "cyan",
+    "SNP": "yellow"
+}
+latest = df.sort_values("Date").groupby("Party").tail(1)
+order = latest.sort_values("Share_", ascending=False)["Party"].tolist()
+
+# --- Configuration ---
+# Set to 'GAM' to use the GAM smoother with CIs, or 'KSMOOTH' for the k-smoother style line.
+SMOOTHER_TYPE = 'GAM' 
+# For GAM: lam controls smoothness (higher = smoother)
+GAM_LAMBDA = 1 
+# For KSMOOTH (lowess): frac controls the fraction of data used for local regression (0.3 is common)
+KSMOOTH_FRAC = 0.3 
+
+plt.figure(figsize=(12, 7))
+
+# --- Loop for Plotting ---
+for party in order:
+    g = df[df["Party"] == party].sort_values("Date")
+    
+    # Prepare Data: Convert Date to numerical format
+    X = g['Date'].astype('int64').values.reshape(-1, 1)
+    y = g['Share_'].values
+    
+    # Skip if not enough data points
+    if len(X) < 10:
+         print(f"Skipping {party}: not enough data points ({len(X)})")
+         continue
+
+    # Add jitter to raw points
+    x_jit = g['Date'] + pd.to_timedelta(
+        np.random.uniform(-2, 2, size=len(g)), unit="D"
+    )
+    y_jit = g['Share_'] + np.random.uniform(-0.5, 0.5, size=len(g))
+
+    plt.scatter(
+        x_jit, y_jit,
+        color=colors[party],
+        alpha=0.3,
+        s=20
+    )
+    
+  # --- SMOOTHING LOGIC ---
+    if SMOOTHER_TYPE == 'GAM':
+        # 1. Fit the LinearGAM (rest of the setup is correct)
+        gam = LinearGAM(s(0, n_splines=20, lam=GAM_LAMBDA)).fit(X, y)
+        
+        # 2. Predict the Smoothed Line and Confidence Intervals
+        XX = np.linspace(X.min(), X.max(), 500).reshape(-1, 1)
+        
+        # CORRECT: Use predict() for the mean estimate (the smooth line)
+        y_pred = gam.predict(XX)
+        
+        # CORRECT: Use confidence_intervals() for the 95% CIs of the mean
+        # It returns a single array with two columns: [Lower CI, Upper CI]
+        y_ci = gam.confidence_intervals(XX, width=0.95)
+        
+        x_smooth_dt = pd.to_datetime(XX.flatten())
+        
+        # Plot the GAM smooth line
+        plt.plot(x_smooth_dt, y_pred, label=party, color=colors.get(party, "gray"), linewidth=2)
+        
+        # Plot the Confidence Interval (shaded area)
+        plt.fill_between(
+            x_smooth_dt, 
+            y_ci[:, 0], # Lower bound (first column of the result)
+            y_ci[:, 1], # Upper bound (second column of the result)
+            color=colors.get(party, "gray"), 
+            alpha=0.10 # Light shading for the CI
+        )
+
+        # Use the end of the predicted smooth line for labeling
+        x_end = x_smooth_dt[-1] # Correct way to get the last element of an Index
+        y_end = y_pred[-1] 
+        
+    # ... (rest of the KSMOOTH/LOWESS logic remains the same)
+        
+    elif SMOOTHER_TYPE == 'KSMOOTH':
+        # The lowess function from statsmodels is essentially a kernel (k) smoother
+        # It uses a fraction (frac) of the nearest points for each local regression.
+        sm = lowess(g['Share_'], g['Date'].astype('int64'), frac=KSMOOTH_FRAC)
+        
+        x_smooth_dt = pd.to_datetime(sm[:, 0])
+        y_pred = sm[:, 1]
+        
+        # Plot the K-Smoother line
+        plt.plot(x_smooth_dt, y_pred, label=party, color=colors.get(party, "gray"), linewidth=2)
+        
+        # Use the end of the smoothed line for labeling
+        x_end = x_smooth_dt.iloc[-1]
+        y_end = y_pred[-1]
+        
+    else:
+        continue # Skip if an invalid smoother type is set
+    
+    # Labeling the lines (shared for both smoother types)
+    plt.text(
+        x_end,
+        y_end,
+        f"{y_end:.1f}%",      # label showing latest value
+        fontsize=11,
+        color=colors[party],
+        ha='left',
+        va='center'
+    )
+
+# --- Final Plot Aesthetics ---
+plt.axhline(y=50, linestyle='--', linewidth=1.5, color='black')
+plt.figtext(0.01, 0.01, 'Created by james_polls | Data Source: findoutnow.co.uk',
+             fontsize=8, color='grey', style='italic')
+plt.xlabel('')
+plt.ylabel('')
+plt.title(' ', fontsize=16, style='italic', loc='left')
+plt.legend(loc='upper left', frameon=False)
+plt.tight_layout()
+#plt.savefig(r"C:\Users\james\OneDrive\Desktop\VsCProjects\westminster\findoutnow_gam", dpi = 1080)
+# Save and Show
+plt.show()  
+
+```

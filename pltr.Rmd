@@ -1,0 +1,87 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate) 
+```
+
+## Palantir vs MAG7
+Palantir has been one of the best performing stock in the market this year and it has outperformed the MAG7. 
+
+```{python, echo=FALSE, warning=FALSE, message=FALSE} 
+import yfinance as yf 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 1. Define Tickers
+# PLTR is our main focus
+main_ticker = 'PLTR'
+
+# The "Magnificent 7"
+mag7_tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA']
+
+# Combine all into one list for downloading
+all_tickers = [main_ticker] + mag7_tickers
+
+# 2. Download Data (Year-to-Date 2025)
+# Using 'start' ensures we capture the exact YTD performance
+print("Downloading market data...")
+data = yf.download(all_tickers, start='2025-01-01', auto_adjust=True)['Close']
+
+# Check if data exists
+if data.empty:
+    print("No data retrieved. Check your internet connection.")
+else:
+    # 3. Normalize Returns (Percentage Growth since Jan 1)
+    # Formula: (Price / Start_Price - 1) * 100
+    normalized = (data / data.iloc[0] - 1) * 100
+
+    # 4. Calculate "Mag 7 Average" (Equal Weighted)
+    # We take the mean of the columns belonging to the Mag 7 tickers
+    mag7_avg = normalized[mag7_tickers].mean(axis=1)
+
+    # 5. Plotting
+    plt.figure(figsize=(14, 8))
+
+    # A. Plot individual Mag 7 stocks (Muted/Grey styles)
+    # We loop through them to make them visible but background context
+    for ticker in mag7_tickers:
+        plt.plot(normalized.index, normalized[ticker], 
+                 label=ticker, color='grey', alpha=0.4, linewidth=1)
+
+    # B. Plot the "Mag 7 Average" (Dashed Red Line)
+    plt.plot(normalized.index, mag7_avg, 
+             label='Mag 7 Average', color='red', linestyle='--', linewidth=2.5)
+
+    # C. Plot Palantir (Thick Black Line)
+    plt.plot(normalized.index, normalized[main_ticker], 
+             label=main_ticker, color='black', linewidth=2) # Palantir Black
+
+    # Chart Styling
+    plt.title(f'Palantir ({main_ticker}) vs Magnificent 7: 2025 Returns', fontsize=16, fontweight='bold')
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Cumulative Return (%)', fontsize=12)
+    plt.axhline(0, color='black', linewidth=1)
+    
+    # Move legend to outside or best location
+    plt.legend(loc='upper left', fontsize=10, frameon=True)
+    plt.grid(True, alpha=0.3)
+    
+    # Format dates
+    plt.gcf().autofmt_xdate()
+    plt.text(0.02, 0.05, 'Data Source: Yahoo!Finance', 
+         transform=plt.gca().transAxes,  # This is the magic part
+         fontsize=10, color='grey') 
+    #plt.savefig(r'C:\Users\james\OneDrive\Desktop\VsCProjects\Stocks\pltr', dpi=1080)  
+    plt.show()
+
+    # 6. Print Final Numbers
+    current_returns = normalized.iloc[-1].sort_values(ascending=False)
+    print("\n--- 2025 Performance Leaderboard ---")
+    print(current_returns.round(2).astype(str) + '%') 
+```
+
+ 

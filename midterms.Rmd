@@ -1,0 +1,50 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 2026 Midterms
+
+```{r,midterms,echo=FALSE, message=FALSE,warning=FALSE,fig.width=12,fig.height=6}
+library(ggplot2) 
+library(dplyr)
+library(readxl)
+library(ggrepel)
+library(mgcv)
+
+# Load Data
+df_gb <- read_excel("data/genericballot.xlsx")
+df_gb$Date <- as.Date(df_gb$Date)
+
+# Weighted Smoothing
+trend_gam <- df_gb %>%
+  filter(!is.na(Party), !is.na(Share)) %>%
+  group_by(Party) %>%
+  group_modify(~{
+    x_num <- as.numeric(.x$Date)
+    # Applying Sample_Size as weight
+    gam_fit <- gam(Share ~ s(x_num, k = 20, bs = "cs"), weights = .x$Sample_Size, data = .x, method = "REML")
+    preds <- predict(gam_fit, se.fit = TRUE)
+    .x$Smoothed <- preds$fit
+    .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
+    .x$LowerCI <- preds$fit - 1.96 * preds$se.fit
+    .x
+  })
+
+latest_points <- trend_gam %>% group_by(Party) %>% filter(Date == max(Date)) %>% slice(1)
+
+# Plot
+ggplot(trend_gam, aes(x = Date, y = Smoothed, color = Party)) +
+  geom_ribbon(aes(ymin = LowerCI, ymax = UpperCI, fill = Party), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  geom_point(aes(y = Share), size = 2, alpha = 0.1) +
+  geom_text_repel(data = latest_points, aes(label = paste0(round(Smoothed, 1), "%")), nudge_x = 10) +
+  scale_color_manual(values = c("Dem" = 'blue', "Rep" = 'red', "D/K" = 'black')) +
+  scale_fill_manual(values = c("Dem" = 'blue', "Rep" = 'red', "D/K" = 'black')) +
+  theme_classic() +
+  labs(title = ".", y = ".", x = ".")    
+```

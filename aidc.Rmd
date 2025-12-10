@@ -1,0 +1,81 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate) 
+```
+## AI & Data Center Stocks Performance YTD 2025
+
+A look at the performance of key "AI / Data Center" stocks since the start of 2025. The chart below shows the cumulative returns of selected stocks in this sector, normalized to 0% on January 1, 2025.
+
+```{python, echo=FALSE,warnings=FALSE, message=FALSE}
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 1. Define the "AI / Data Center" Basket
+# Feel free to add/remove tickers from this list
+tickers = [
+    'NVDA',  # Nvidia (AI Chips)
+    'AMD',   # AMD (AI Chips)
+    'VRT',   # Vertiv (Cooling & Power)
+    'ANET',  # Arista (Networking)
+    'SMCI',  # Super Micro (Server Racks)
+    'EQIX',  # Equinix (Physical Data Centers)
+    'DELL',  # Dell (AI Servers)
+    'PLTR',  #Palantir(AI platform)
+    'CRWV',  # Coreweave(Datacenters)
+    'NBIS',  # Nebis(AI infrastructure)
+    'AVGO',  # Broadcom(AI Chips,Datacenters)
+    'CORZ',  # CoreSCientific(AI Datacenters)
+    'IREN',  # Iren Limited(AI CLoud)
+    'APLD',  # Applied Digital(AI Datacenters)
+    'ALAB',  # Astera Labs(AI Chips) 
+]
+
+# 2. Download Data from Jan 1, 2025 to Today
+print("Downloading data...")
+# We use auto_adjust=True to account for any dividends/splits automatically
+data = yf.download(tickers, start='2025-01-01', auto_adjust=True)['Close']
+
+# 3. Check if data was retrieved successfully
+if data.empty:
+    print("No data found. Please check your internet connection or ticker symbols.")
+else:
+    # 4. Calculate Percentage Return (Relative to Day 1)
+    # Formula: (Price / Start_Price - 1) * 100
+    # This makes every stock start at 0% on Jan 1st
+    normalized_returns = (data / data.iloc[0] - 1) * 100
+
+    # 5. Plotting
+    plt.figure(figsize=(14, 7))
+    
+    # Loop through columns to plot each ticker
+    for ticker in normalized_returns.columns:
+        # Plot only if we have data for the ticker
+        plt.plot(normalized_returns.index, normalized_returns[ticker], label=ticker, linewidth=2)
+
+    # Styling the Plot
+    plt.title('AI & Data Center Stock Returns (YTD 2025)', fontsize=16)
+    plt.xlabel('.', fontsize=12)
+    plt.ylabel('Cumulative Return (%)', fontsize=12)
+    plt.axhline(0, color='black', linewidth=1, linestyle='--') # Add a zero line
+    plt.legend(loc='upper left', fontsize=10)
+    plt.grid(True, alpha=0.3)
+    
+    # Format x-axis dates nicely
+    plt.gcf().autofmt_xdate()
+    #plt.figtext(0.02, 0.02, 'Source: Yahoo Finance API(created by jamesstats)', color='gray') 
+
+     
+    
+    plt.show()
+
+    # Optional: Print the final return values sorted
+    final_returns = normalized_returns.iloc[-1].sort_values(ascending=False)
+    print("\n--- Performance Since Jan 1, 2025 ---")
+    print(final_returns.round(2).astype(str) + '%')
+```

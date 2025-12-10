@@ -1,0 +1,33 @@
+name: "databoard" # Used as the default title in the browser tab
+title: "My Awesome R Markdown Website" # Title displayed prominently on the site
+output_dir: "." # Specifies where the finished website files are saved. "." means the project root.
+navbar:
+  title: "databoard"
+  left: # Navigation links on the left side of the navbar
+    - text: "Trump 2.0"
+      href: index.html
+    - text: "2026 Midterms"
+      href: midterms.html
+    - text: "Westminster" 
+      href: analysis-1.html
+    - text: "U.K Polls Analysis"
+      menu: # Create a dropdown menu
+        - text: "GE2024 VOTERS"
+          href: report-a.html
+        - text: "GE2024 Non-VOTERS"
+          href: report-b.html
+    - text: "Stock Market Analysis"
+      menu: # create a dropdown menu
+        - text: "Palantir vs MAG7" 
+          href: pltr.html
+        - text: "AI and DataCenters"
+          href: aidc.html 
+    - text: "About"
+      href: about.html
+  right: # Navigation links on the right side of the navbar (optional)
+    - icon: fa-github
+      href: https://github.com/jamesstats/databoard/
+output:
+  html_document:
+    theme: cosmo # Choose a theme (e.g., default, cerulean, journal, flatly, spacelab, lumen, paper, sandstone, simplex, yeti)
+    highlight: textmate # Choose a syntax highlighting style

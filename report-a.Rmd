@@ -1,0 +1,112 @@
+---
+date: "2025-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+```
+
+## Conservative and Labour Voters
+
+A look at who the 2024 General Election Conservative and Labour Voters would support if another General Election were held today.The data is from YouGov and FindOutNow.
+
+
+```{python, echo=FALSE,warning=FALSE,message=FALSE,fig.align='center',fig.width=12, out.width="100%"}
+import matplotlib.pyplot as plt
+import numpy as np
+from pygam import LinearGAM, s
+import matplotlib.dates as mdates
+import pandas as pd # Import pandas for datetime conversion
+#load data
+df = pd.read_excel(r"C:\Users\james\OneDrive\Documents\Docs\labconvoters.xlsx")   
+# Ensure 'Date_unix' column is present for PyGam
+df['Date_unix'] = df['Date'].apply(lambda x: x.timestamp())
+
+# Define a custom color palette for the parties (already defined, ensuring it's available)
+party_colors = {
+    'Con': 'blue',
+    'Lab': 'red',
+    'LibDem': 'orange',
+    'RefUK': 'cyan',
+    'Green': 'green',
+    'SNP': 'yellow',
+    'PC': 'lightgreen',
+    'Other': 'black'
+}
+
+# Get unique GE2024 and Party values
+ge2024_facets = df['GE2024'].unique()
+parties = df['Party'].unique()
+
+# Create a Matplotlib figure and subplots
+fig, axes = plt.subplots(nrows=1, ncols=len(ge2024_facets), figsize=(6 * len(ge2024_facets), 6), sharey=True)
+
+# Ensure axes is an array even for a single facet
+if len(ge2024_facets) == 1:
+    axes = [axes]
+
+# Iterate through each GE2024 category (facet)
+for i, ge2024_category in enumerate(ge2024_facets):
+    ax = axes[i]
+    subset_ge2024 = df[df['GE2024'] == ge2024_category]
+
+    # Iterate through each Party
+    for party in parties:
+        subset_party = subset_ge2024[subset_ge2024['Party'] == party]
+
+        # Only fit GAM if there's enough data for this party and facet
+        if len(subset_party) > 1:
+            X_unix = subset_party['Date_unix'].values.reshape(-1, 1)
+            y = subset_party['Share'].values
+
+            # Fit LinearGAM
+            # n_splines can be adjusted for smoothness. Use s(0) for the first feature.
+            # Set an appropriate number of points for prediction
+            n_points = 500 # number of points to use for plotting the GAM line
+            XX_unix = np.linspace(X_unix.min(), X_unix.max(), n_points)
+
+            # Convert Unix timestamps to Matplotlib's ordinal dates for consistent plotting
+            X_datetime_mpl = mdates.date2num(pd.to_datetime(X_unix.flatten(), unit='s'))
+            XX_datetime_mpl = mdates.date2num(pd.to_datetime(XX_unix.flatten(), unit='s'))
+
+            # Fit GAM only if enough unique points for spline
+            if len(np.unique(X_unix)) > 1:
+                gam = LinearGAM(s(0)).fit(X_unix, y)
+                # Predict smoothed line and confidence intervals
+                yy = gam.predict(XX_unix)
+                ci = gam.confidence_intervals(XX_unix, width=.95)
+
+                # Plot smoothed line and confidence interval using Matplotlib's ordinal dates
+                ax.plot(XX_datetime_mpl, yy, label=party, color=party_colors.get(party, 'gray'), linewidth=2)
+                ax.fill_between(XX_datetime_mpl, ci[:, 0], ci[:, 1], color=party_colors.get(party, 'gray'), alpha=0.15)
+            
+            # Plot original scatter points using Matplotlib's ordinal dates
+            ax.scatter(X_datetime_mpl, y, color=party_colors.get(party, 'gray'), alpha=0.6, s=20)
+
+    # Set title for the subplot
+    ax.set_title(f'GE2024 = {ge2024_category}')
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+
+    # Format x-axis as dates
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m')) 
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    for label in ax.get_xticklabels():
+        label.set_rotation(45)
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.98]) # Adjusted layout
+fig.suptitle('', fontsize=16, y=0.98)
+plt.text(0.01, 0.01, 'DataSource|yougov.co.uk & findoutnow.co.uk(Generalized Additive Models(GAMs))', 
+         transform=plt.gca().transAxes,  # This is the magic part
+         fontsize=8, color='grey')  
+
+# Save the generated chart to a file
+#chart_filename_pygam = 'party_support_pygam_chart.png'
+#plt.savefig(r'C:\Users\james\OneDrive\Desktop\VsCProjects\Westminster\labcons', dpi=1080) 
+#print(f"Facet wrap chart with PyGam smoother saved as '{chart_filename_pygam}'")
+plt.show() # Display the plot
+```
+
+ 
