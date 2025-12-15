@@ -16,7 +16,8 @@ library(ggrepel)
 library(mgcv)
 
 # Load Data
-data <- read_xlsx("data/UKPolling.xlsx")
+path <- "C:/Users/james/OneDrive/Documents/Docs/UKPolling.xlsx" 
+data <- read_xlsx(path) 
 data$Date <- as.Date(data$Date)
 df <- data %>% filter(!is.na(Party), !is.na(Share))
 

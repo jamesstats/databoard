@@ -10,7 +10,7 @@ library(reticulate)
 
 ## Conservative and Labour Voters
 
-A look at who the 2024 General Election Conservative and Labour Voters would support if another General Election were held today.The data is from YouGov and FindOutNow.
+A look at who the 2024 General Election Conservative and Labour Voters would support if another General Election were held today.The data is from YouGov, Opinium and FindOutNow.
 
 
 ```{python, echo=FALSE,warning=FALSE,message=FALSE,fig.align='center',fig.width=12, out.width="100%"}
@@ -98,7 +98,7 @@ for i, ge2024_category in enumerate(ge2024_facets):
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.98]) # Adjusted layout
 fig.suptitle('', fontsize=16, y=0.98)
-plt.text(0.01, 0.01, 'DataSource|yougov.co.uk & findoutnow.co.uk(Generalized Additive Models(GAMs))', 
+plt.text(0.01, 0.01, 'DataSource|yougov.co.uk, Opinium & findoutnow.co.uk(Generalized Additive Models(GAMs))', 
          transform=plt.gca().transAxes,  # This is the magic part
          fontsize=8, color='grey')  
 
