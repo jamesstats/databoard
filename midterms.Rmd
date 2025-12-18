@@ -45,7 +45,7 @@ ggplot(trend_gam, aes(x = Date, y = Smoothed, color = Party)) +
   scale_color_manual(values = c("Dem" = 'blue', "Rep" = 'red', "D/K" = 'black')) +
   scale_fill_manual(values = c("Dem" = 'blue', "Rep" = 'red', "D/K" = 'black')) +
   theme_classic() +
-  labs(title = "Republican or Democratic candidate for U.S. Congress?", y = "", x = "",caption = 'jamesstats/databoard\nDatasource:AtlasIntel,CNBC,CNN,Cygnal,EchelonInsights,EmersonCollege,Marist/NPR/PBS,MarquetteLaw,NBCNews,NYT/SIENA,Quinnipiac')+
+  labs(title = "Republican or Democratic candidate for U.S. Congress?", y = "", x = "",caption = 'jamesstats/databoard\nDatasource:AtlasIntel,ClarityLabs,CNBC,CNN,Cygnal,EchelonInsights,EmersonCollege,Marist/NPR/PBS,MarquetteLaw,NBCNews,NYT/SIENA,Quinnipiac')+
   theme(plot.caption = element_text(hjust = 0,size=12,face="italic"),
         plot.title = element_text(hjust = 0,size=16,face="bold",color = "black",
                                   family = "serif"),
