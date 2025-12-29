@@ -13,9 +13,9 @@ navbar:
     - text: "U.K Polls Analysis"
       menu: # Create a dropdown menu
         - text: "GE2024 VOTERS"
-          href: report-a.html
+          href: 2024voters.html
         - text: "GE2024 Non-VOTERS"
-          href: report-b.html
+          href: nonvoters.html
     - text: "Stock Market Analysis"
       menu: # create a dropdown menu
         - text: "Palantir vs MAG7" 

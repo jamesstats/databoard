@@ -27,7 +27,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 
 # --- Data Loading (Update file path as necessary) ---
 try:
-    df = pd.read_excel(r"C:\Users\james\jupyterlab\FON_POLL.xlsx")
+    df = pd.read_excel(r"C:\Users\james\OneDrive\Documents\Docs\FON_POLL.xlsx")
 except FileNotFoundError:
     print("Error: Could not find the file. Please update the file path to a valid location.")
     exit() # Stop execution if the file isn't found
