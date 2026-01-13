@@ -22,7 +22,7 @@ navbar:
           href: pltr.html
         - text: "AI and DataCenters"
           href: aidc.html 
-    - text: "About"
+    - text: "About!" 
       href: about.html
   right: # Navigation links on the right side of the navbar (optional)
     - icon: fa-github

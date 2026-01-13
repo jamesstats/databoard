@@ -27,7 +27,8 @@ df_trend <- df %>%
   group_by(Party) %>%
   group_modify(~{
     x_num <- as.numeric(.x$Date)
-    gam_fit <- gam(Share ~ s(x_num, k = 20), data = .x, method = "REML")
+    gam_fit <- gam(Share ~ s(x_num, k = 20), data = .x, method = "REML",
+                   na.action = na.exclude) 
     preds <- predict(gam_fit, se.fit = TRUE)
     .x$RollingShare <- preds$fit
     .x$UpperCI <- preds$fit + 1.96 * preds$se.fit
